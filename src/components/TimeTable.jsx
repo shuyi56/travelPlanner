@@ -23,7 +23,7 @@ const data = hours.map(hour => {
 
 function TimeTable() {
   return (
-    <Card title="Weekly Schedule" bordered={false}>
+    <Card title="Weekly Schedule">
       <Table
         columns={columns}
         dataSource={data}

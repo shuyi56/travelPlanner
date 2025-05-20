@@ -69,7 +69,7 @@ function Budgeting() {
   ];
 
   return (
-    <Card title="Budget Tracker" bordered={false}>
+    <Card title="Budget Tracker" variant="borderless">
       {/* Budget Allocation Section */}
       <Card type="inner" title="Budget Allocation" style={{ marginBottom: 24 }}>
         <Form

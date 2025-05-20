@@ -1,6 +1,11 @@
 import React from "react";
 import { Typography, Button, theme, Form } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
+import { createTravelIdea } from "./TravelIdea";
+import { createEatingIdea } from "./EatingIdea";
+import { createSightseeingIdea } from "./SightseeingIdea";
+import { createActivityIdea } from "./ActivityIdea";
+import { createAccommodationIdea } from "./AccommodationIdea";
 
 export interface BaseIdea {
   name: string;
@@ -34,9 +39,6 @@ export function BaseIdeaCard<T extends BaseIdea>({
           marginBottom: 24,
         }}
       >
-        <Typography.Title level={4} style={{ margin: 0 }}>
-          {subitem.name}
-        </Typography.Title>
         {extraHeader}
       </div>
       {children}
@@ -64,17 +66,7 @@ export function BaseIdeaCard<T extends BaseIdea>({
           justifyContent: "flex-end",
           gap: 8,
         }}
-      >
-        <Button
-          size="middle"
-          type="primary"
-          ghost
-          icon={<EyeOutlined />}
-          onClick={onEdit}
-        >
-          Edit Details
-        </Button>
-      </div>
+      ></div>
     </div>
   );
 }
@@ -85,4 +77,21 @@ export interface BaseIdeaFormProps {
 
 export function BaseIdeaForm({ children }: BaseIdeaFormProps) {
   return <>{children}</>;
+}
+
+export function ideaFactory(category: string, name: string): BaseIdea {
+  switch (category) {
+    case "Eating":
+      return createEatingIdea(name);
+    case "Travel":
+      return createTravelIdea(name);
+    case "Sightseeing":
+      return createSightseeingIdea(name);
+    case "Activities":
+      return createActivityIdea(name);
+    case "Accommodation":
+      return createAccommodationIdea(name);
+    default:
+      return { name, photos: [] };
+  }
 }

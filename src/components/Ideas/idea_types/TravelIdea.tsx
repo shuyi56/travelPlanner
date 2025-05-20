@@ -9,7 +9,7 @@ import {
   Segmented,
   theme,
 } from "antd";
-import { DollarRating } from "../shared/DollarRating";
+import { DollarRating } from "../../shared/DollarRating";
 import { BaseIdea, BaseIdeaCard, BaseIdeaForm } from "./BaseIdea";
 
 export interface TravelIdea extends BaseIdea {
@@ -18,6 +18,18 @@ export interface TravelIdea extends BaseIdea {
   to?: string;
   duration?: string;
   cost?: number;
+}
+
+export function createTravelIdea(name: string): TravelIdea {
+  return {
+    name,
+    photos: [],
+    transportType: "",
+    from: "",
+    to: "",
+    duration: "",
+    cost: 0,
+  };
 }
 
 export const TravelIdeaForm: React.FC = () => (

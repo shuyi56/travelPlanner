@@ -1,6 +1,6 @@
 import React from "react";
 import { Form, Input, AutoComplete, Typography, theme } from "antd";
-import { DollarRating } from "../shared/DollarRating";
+import { DollarRating } from "../../shared/DollarRating";
 import { BaseIdea, BaseIdeaCard, BaseIdeaForm } from "./BaseIdea";
 
 export interface SightseeingIdea extends BaseIdea {
@@ -8,6 +8,17 @@ export interface SightseeingIdea extends BaseIdea {
   price?: number;
   openingHours?: string;
   bestTime?: string;
+}
+
+export function createSightseeingIdea(name: string): SightseeingIdea {
+  return {
+    name,
+    photos: [],
+    location: "",
+    price: 0,
+    openingHours: "",
+    bestTime: "",
+  };
 }
 
 export const SightseeingIdeaForm: React.FC = () => (

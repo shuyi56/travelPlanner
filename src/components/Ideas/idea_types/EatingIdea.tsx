@@ -1,12 +1,22 @@
 import React from "react";
 import { Form, Input, AutoComplete, Typography, Button, theme } from "antd";
-import { DollarRating } from "../shared/DollarRating";
+import { DollarRating } from "../../shared/DollarRating";
 import { BaseIdea, BaseIdeaCard, BaseIdeaForm } from "./BaseIdea";
 
 export interface EatingIdea extends BaseIdea {
   cuisine?: string;
   price?: number;
   address?: string;
+}
+
+export function createEatingIdea(name: string): EatingIdea {
+  return {
+    name,
+    photos: [],
+    cuisine: "",
+    price: 0,
+    address: "",
+  };
 }
 
 export const EatingIdeaForm: React.FC = () => (

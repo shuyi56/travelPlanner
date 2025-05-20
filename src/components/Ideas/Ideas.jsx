@@ -28,25 +28,24 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
 } from "@ant-design/icons";
-import { TravelIdeaCard, TravelIdeaForm } from "./Ideas/idea_types/TravelIdea.tsx";
-import { EatingIdeaCard, EatingIdeaForm } from "./Ideas/idea_types/EatingIdea.tsx";
-import { ActivityIdeaCard, ActivityIdeaForm } from "./Ideas/idea_types/ActivityIdea.tsx";
+import { TravelIdeaCard, TravelIdeaForm } from "./idea_types/TravelIdea.tsx";
+import { EatingIdeaCard, EatingIdeaForm } from "./idea_types/EatingIdea.tsx";
+import { ActivityIdeaCard, ActivityIdeaForm } from "./idea_types/ActivityIdea.tsx";
 import {
   SightseeingIdeaCard,
   SightseeingIdeaForm,
-} from "./Ideas/idea_types/SightseeingIdea.tsx";
+} from "./idea_types/SightseeingIdea.tsx";
 import {
   AccommodationIdeaCard,
   AccommodationIdeaForm,
-} from "./Ideas/idea_types/AccommodationIdea.tsx";
+} from "./idea_types/AccommodationIdea.tsx";
 import dayjs from "dayjs";
-import fallbackImg from "../assets/fallback.png";
+import fallbackImg from "../../assets/fallback.png";
 import "./Ideas.css";
 import { handleSublistKeyPress } from './Ideas.tsx';
-import ImageCollage from "./ImageCollage";
-import OutlineOverview from "./OutlineOverview";
-import NavigationPanel from "./NavigationPanel";
-import { eventTypeIcons } from "./shared/EventTypeIcons";
+import ImageCollage from "../shared/ImageCollage.jsx";
+import OutlineOverview from "./OutlineOverview.jsx";
+import NavigationPanel from "./NavigationPanel.jsx";
 
 const { Sider, Content } = Layout;
 const { useToken } = theme;
@@ -84,6 +83,14 @@ const categoryStyles = {
   },
 };
 
+const categoryIcons = {
+  Travel: <CarOutlined style={{ color: "#1890ff" }} />,
+  Eating: <CoffeeOutlined style={{ color: "#52c41a" }} />,
+  Sightseeing: <CameraOutlined style={{ color: "#eb2f96" }} />,
+  Activities: <ThunderboltOutlined style={{ color: "#faad14" }} />,
+  Accommodation: <HomeOutlined style={{color:categoryStyles.Accommodation.iconBg}} />,
+};
+
 function Ideas({darkMode}) {
   const { token } = useToken();
   const [ideas, setIdeas] = useState([]);
@@ -98,17 +105,16 @@ function Ideas({darkMode}) {
   const [expandedCard, setExpandedCard] = useState(null);
   const [form] = Form.useForm();
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [breakpoint, setBreakpoint] = useState(window.innerWidth);
 
+  // Add breakpoint listener
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
+    const handleResize = () => setBreakpoint(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-
-  const isMobile = windowWidth <= 500;
-
+  const isMobile = breakpoint <= 500; // Changed from 1000 to 500
 
   // Fix: Reset and set form fields when editingSubitem changes
   React.useEffect(() => {
@@ -545,8 +551,8 @@ function Ideas({darkMode}) {
             onClick={() => setDrawerVisible(!drawerVisible)}
             style={{
               position: 'fixed',
-              top: 16,
-              left: 16,
+              top: 80,
+              left: 10,
               zIndex: 100,
               background: token.colorBgContainer,
               boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -571,7 +577,7 @@ function Ideas({darkMode}) {
               selectedIdx={selectedIdx}
               selectedSubitemIdx={selectedSubitemIdx}
               creatingSublist={creatingSublist}
-              categoryIcons={eventTypeIcons}
+              categoryIcons={categoryIcons}
               darkMode={darkMode}
               handleCreateNew={handleCreateNew}
               handleNewKeyPress={handleNewKeyPress}
@@ -604,7 +610,7 @@ function Ideas({darkMode}) {
             selectedIdx={selectedIdx}
             selectedSubitemIdx={selectedSubitemIdx}
             creatingSublist={creatingSublist}
-            categoryIcons={eventTypeIcons}
+            categoryIcons={categoryIcons}
             darkMode={darkMode}
             handleCreateNew={handleCreateNew}
             handleNewKeyPress={handleNewKeyPress}
@@ -631,7 +637,7 @@ function Ideas({darkMode}) {
           <OutlineOverview
             ideas={ideas}
             token={token}
-            categoryIcons={eventTypeIcons}
+            categoryIcons={categoryIcons}
           />
         ) : editingSubitem ? (
           <Form
