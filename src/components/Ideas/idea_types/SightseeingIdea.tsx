@@ -1,7 +1,8 @@
 import React from "react";
-import { Form, Input, AutoComplete, Typography, theme } from "antd";
+import { Form, Input, Typography, theme } from "antd";
 import { DollarRating } from "../../shared/DollarRating";
 import { BaseIdea, BaseIdeaCard, BaseIdeaForm } from "./BaseIdea";
+import AddressSearch from "../../shared/AddressSearch";
 
 export interface SightseeingIdea extends BaseIdea {
   location?: string;
@@ -24,7 +25,7 @@ export function createSightseeingIdea(name: string): SightseeingIdea {
 export const SightseeingIdeaForm: React.FC = () => (
   <BaseIdeaForm>
     <Form.Item name="location" label="Location">
-      <AutoComplete options={[]} placeholder="Type to search location" />
+      <AddressSearch placeholder="Type to search location" />
     </Form.Item>
     <Form.Item name="price" label="Entry Fee">
       <DollarRating />

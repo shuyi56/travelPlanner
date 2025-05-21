@@ -42,7 +42,7 @@ import {
 import dayjs from "dayjs";
 import fallbackImg from "../../assets/fallback.png";
 import "./Ideas.css";
-import { handleSublistKeyPress } from './Ideas.tsx';
+import { handleSublistKeyPress, saveIdeasAppStateToLocalStorage } from './Ideas.tsx';
 import ImageCollage from "../shared/ImageCollage.jsx";
 import OutlineOverview from "./OutlineOverview.jsx";
 import NavigationPanel from "./NavigationPanel.jsx";
@@ -93,19 +93,75 @@ const categoryIcons = {
 
 function Ideas({darkMode}) {
   const { token } = useToken();
-  const [ideas, setIdeas] = useState([]);
-  const [selectedIdx, setSelectedIdx] = useState(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [creatingSublist, setCreatingSublist] = useState(null);
-  const [showOutline, setShowOutline] = useState(false);
-  const [editingSubitem, setEditingSubitem] = useState(null);
-  const [flippedCards, setFlippedCards] = useState({});
-  const [fileList, setFileList] = useState([]);
-  const [selectedSubitemIdx, setSelectedSubitemIdx] = useState(null);
-  const [expandedCard, setExpandedCard] = useState(null);
+  // Initialize state from localStorage if available
+  const getInitialState = () => {
+    try {
+      const saved = localStorage.getItem('ideasAppState');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ideas: parsed.ideas || [],
+          selectedIdx: parsed.selectedIdx ?? null,
+          isCreating: parsed.isCreating ?? false,
+          creatingSublist: parsed.creatingSublist ?? null,
+          showOutline: parsed.showOutline ?? false,
+          editingSubitem: parsed.editingSubitem ?? null,
+          flippedCards: parsed.flippedCards || {},
+          fileList: parsed.fileList || [],
+          selectedSubitemIdx: parsed.selectedSubitemIdx ?? null,
+          expandedCard: parsed.expandedCard ?? null,
+          drawerVisible: parsed.drawerVisible ?? false,
+          breakpoint: parsed.breakpoint || window.innerWidth,
+        };
+      }
+    } catch (e) {}
+    return {
+      ideas: [],
+      selectedIdx: null,
+      isCreating: false,
+      creatingSublist: null,
+      showOutline: false,
+      editingSubitem: null,
+      flippedCards: {},
+      fileList: [],
+      selectedSubitemIdx: null,
+      expandedCard: null,
+      drawerVisible: false,
+      breakpoint: window.innerWidth,
+    };
+  };
+  const initialState = getInitialState();
+  const [ideas, setIdeas] = useState(initialState.ideas);
+  const [selectedIdx, setSelectedIdx] = useState(initialState.selectedIdx);
+  const [isCreating, setIsCreating] = useState(initialState.isCreating);
+  const [creatingSublist, setCreatingSublist] = useState(initialState.creatingSublist);
+  const [showOutline, setShowOutline] = useState(initialState.showOutline);
+  const [editingSubitem, setEditingSubitem] = useState(initialState.editingSubitem);
+  const [flippedCards, setFlippedCards] = useState(initialState.flippedCards);
+  const [fileList, setFileList] = useState(initialState.fileList);
+  const [selectedSubitemIdx, setSelectedSubitemIdx] = useState(initialState.selectedSubitemIdx);
+  const [expandedCard, setExpandedCard] = useState(initialState.expandedCard);
   const [form] = Form.useForm();
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const [breakpoint, setBreakpoint] = useState(window.innerWidth);
+  const [drawerVisible, setDrawerVisible] = useState(initialState.drawerVisible);
+  const [breakpoint, setBreakpoint] = useState(initialState.breakpoint);
+
+  // Save all relevant state to localStorage whenever it changes
+  useEffect(() => {
+    saveIdeasAppStateToLocalStorage({
+      ideas,
+      selectedIdx,
+      isCreating,
+      creatingSublist,
+      showOutline,
+      editingSubitem,
+      flippedCards,
+      fileList,
+      selectedSubitemIdx,
+      expandedCard,
+      drawerVisible,
+      breakpoint,
+    });
+  }, [ideas, selectedIdx, isCreating, creatingSublist, showOutline, editingSubitem, flippedCards, fileList, selectedSubitemIdx, expandedCard, drawerVisible, breakpoint]);
 
   // Add breakpoint listener
   useEffect(() => {
@@ -149,15 +205,32 @@ function Ideas({darkMode}) {
 
   const handleNewKeyPress = (e) => {
     if (e.key === "Enter" && e.target.value.trim()) {
-      setIdeas([
+      const newIdeas = [
         ...ideas,
         {
           title: e.target.value.trim(),
           content: "",
           category: "Activities",
         },
-      ]);
+      ];
+      setIdeas(newIdeas);
       setIsCreating(false);
+
+      // Save to localStorage after adding a new idea
+      saveIdeasAppStateToLocalStorage({
+        ideas: newIdeas,
+        selectedIdx,
+        isCreating: false,
+        creatingSublist,
+        showOutline,
+        editingSubitem,
+        flippedCards,
+        fileList,
+        selectedSubitemIdx,
+        expandedCard,
+        drawerVisible,
+        breakpoint,
+      });
     } else if (e.key === "Escape") {
       setIsCreating(false);
     }
@@ -167,6 +240,21 @@ function Ideas({darkMode}) {
     const updatedIdeas = [...ideas];
     updatedIdeas[selectedIdx] = { ...updatedIdeas[selectedIdx], ...values };
     setIdeas(updatedIdeas);
+    // Save to localStorage after modifying an idea
+    saveIdeasAppStateToLocalStorage({
+      ideas: updatedIdeas,
+      selectedIdx,
+      isCreating,
+      creatingSublist,
+      showOutline,
+      editingSubitem,
+      flippedCards,
+      fileList,
+      selectedSubitemIdx,
+      expandedCard,
+      drawerVisible,
+      breakpoint,
+    });
   };
 
   const handleSublistKeyPressWrapper = (e, parentIdx) => {
@@ -241,6 +329,21 @@ function Ideas({darkMode}) {
     setIdeas(updatedIdeas);
     setFileList([]);
     setEditingSubitem(null);
+    // Save to localStorage after adding or editing a subIdea
+    saveIdeasAppStateToLocalStorage({
+      ideas: updatedIdeas,
+      selectedIdx,
+      isCreating,
+      creatingSublist,
+      showOutline,
+      editingSubitem: null,
+      flippedCards,
+      fileList: [],
+      selectedSubitemIdx,
+      expandedCard,
+      drawerVisible,
+      breakpoint,
+    });
   };
 
   const handleItemClick = (idx, e) => {

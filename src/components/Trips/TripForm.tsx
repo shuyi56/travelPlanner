@@ -31,6 +31,7 @@ const TripForm: React.FC<TripFormProps> = ({ onSubmit, initialValues }) => {
       id: initialValues?.id || "",
       tripName: values.tripName,
       description: values.description,
+      travelers: initialValues?.travelers ?? 1,
       dates: values.dates.map((date: dayjs.Dayjs) => date.format("YYYY-MM-DD")),
     };
     onSubmit(tripData);
