@@ -26,19 +26,23 @@ describe('TripForm', () => {
     // Click the date range picker
     await userEvent.click(screen.getByLabelText(/Trip Dates/i));
     // Click the start date (e.g., 15th of the current month)
-    await userEvent.click(screen.getByText('15'));
+    const day15s = screen.getAllByText((content, element) => {
+      return element.classList.contains('ant-picker-cell-inner') && content === '15' && !element.parentElement.classList.contains('ant-picker-cell-disabled');
+    });
+    await userEvent.click(day15s[0]);
     // Click the end date (e.g., 20th of the current month)
-    await userEvent.click(screen.getByText('20'));
+    const day20s = screen.getAllByText((content, element) => {
+      return element.classList.contains('ant-picker-cell-inner') && content === '20' && !element.parentElement.classList.contains('ant-picker-cell-disabled');
+    });
+    await userEvent.click(day20s[0]);
     await userEvent.type(screen.getByLabelText(/Description/i), 'This is a description of my awesome trip.');
 
     await userEvent.click(screen.getByRole('button', {name: /Create Trip|Update Trip/i}));
 
     expect(handleSubmit).toHaveBeenCalledWith({
-      name: 'My Awesome Trip',
-      dateRange: {
-        from: expect.any(Date), // We can't know the exact date, so we check for type
-        to: expect.any(Date),
-      },
+      id: '', // Expect an empty id for new submissions
+      tripName: 'My Awesome Trip',
+      dates: [expect.any(String), expect.any(String)], // Form submits dates as strings
       description: 'This is a description of my awesome trip.',
     });
   });
@@ -51,9 +55,15 @@ describe('TripForm', () => {
     // Click the date range picker
     await userEvent.click(screen.getByLabelText(/Trip Dates/i));
     // Click the start date (e.g., 15th of the current month)
-    await userEvent.click(screen.getByText('15'));
+    const day15sReset = screen.getAllByText((content, element) => {
+      return element.classList.contains('ant-picker-cell-inner') && content === '15' && !element.parentElement.classList.contains('ant-picker-cell-disabled');
+    });
+    await userEvent.click(day15sReset[0]);
     // Click the end date (e.g., 20th of the current month)
-    await userEvent.click(screen.getByText('20'));
+    const day20sReset = screen.getAllByText((content, element) => {
+      return element.classList.contains('ant-picker-cell-inner') && content === '20' && !element.parentElement.classList.contains('ant-picker-cell-disabled');
+    });
+    await userEvent.click(day20sReset[0]);
     await userEvent.type(screen.getByLabelText(/Description/i), 'This is a description of my awesome trip.');
 
     await userEvent.click(screen.getByRole('button', {name: /Create Trip|Update Trip/i}));
@@ -72,8 +82,14 @@ describe('TripForm', () => {
 
     // Fill other fields
     await userEvent.click(screen.getByLabelText(/Trip Dates/i));
-    await userEvent.click(screen.getByText('15'));
-    await userEvent.click(screen.getByText('20'));
+    const day15sNameValidation = screen.getAllByText((content, element) => {
+      return element.classList.contains('ant-picker-cell-inner') && content === '15' && !element.parentElement.classList.contains('ant-picker-cell-disabled');
+    });
+    await userEvent.click(day15sNameValidation[0]);
+    const day20sNameValidation = screen.getAllByText((content, element) => {
+      return element.classList.contains('ant-picker-cell-inner') && content === '20' && !element.parentElement.classList.contains('ant-picker-cell-disabled');
+    });
+    await userEvent.click(day20sNameValidation[0]);
     await userEvent.type(screen.getByLabelText(/Description/i), 'Test Description');
 
     await userEvent.click(screen.getByRole('button', {name: /Create Trip|Update Trip/i}));
@@ -103,8 +119,14 @@ describe('TripForm', () => {
     // Fill other fields
     await userEvent.type(screen.getByLabelText(/Trip Name/i), 'Test Trip');
     await userEvent.click(screen.getByLabelText(/Trip Dates/i));
-    await userEvent.click(screen.getByText('15'));
-    await userEvent.click(screen.getByText('20'));
+    const day15sDescValidation = screen.getAllByText((content, element) => {
+      return element.classList.contains('ant-picker-cell-inner') && content === '15' && !element.parentElement.classList.contains('ant-picker-cell-disabled');
+    });
+    await userEvent.click(day15sDescValidation[0]);
+    const day20sDescValidation = screen.getAllByText((content, element) => {
+      return element.classList.contains('ant-picker-cell-inner') && content === '20' && !element.parentElement.classList.contains('ant-picker-cell-disabled');
+    });
+    await userEvent.click(day20sDescValidation[0]);
 
     await userEvent.click(screen.getByRole('button', {name: /Create Trip|Update Trip/i}));
 
@@ -116,48 +138,22 @@ describe('TripForm', () => {
 describe('TripForm with Initial Values', () => {
   const initialValues = {
     id: '1',
-    name: 'My Awesome Trip',
+    tripName: 'My Awesome Trip', // Changed from name to tripName
     description: 'A great adventure',
-    dateRange: {
-      from: new Date('2024-03-15T00:00:00.000Z'), // AntD RangePicker uses Date objects
-      to: new Date('2024-03-20T00:00:00.000Z'),
-    },
-  };
-
-  // Helper to format date as YYYY-MM-DD for checking input value
-  const formatDate = (date) => {
-    const d = new Date(date);
-    let month = '' + (d.getMonth() + 1);
-    let day = '' + d.getDate();
-    const year = d.getFullYear();
-
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-
-    return [year, month, day].join('-');
+    // Using date strings directly as per subtask example
+    dates: ['2024-03-15', '2024-03-20'],
   };
 
   it('pre-fills form fields and sets button to "Update Trip" when initialValues are provided', () => {
     render(<TripForm onSubmit={() => {}} initialValues={initialValues} />);
 
-    expect(screen.getByLabelText(/Trip Name/i)).toHaveValue(initialValues.name);
+    expect(screen.getByLabelText(/Trip Name/i)).toHaveValue(initialValues.tripName);
     expect(screen.getByLabelText(/Description/i)).toHaveValue(initialValues.description);
 
-    // AntD RangePicker renders two input fields for start and end dates
-    // Their placeholder is 'Start date' and 'End date' respectively by default when empty
-    // When populated, their value attribute holds the formatted date.
-    const dateInputs = screen.getAllByRole('textbox'); // DatePickers are textboxes
-    // Find the specific inputs for dates. Assuming date inputs are identifiable if other text inputs exist.
-    // A more robust way might involve specific test-ids if the form grows more complex.
-    // For now, we'll check if the values exist among the textboxes.
-    // Note: AntD date pickers can be tricky to test for values directly without user interaction
-    // to open them. However, when initialValues are set, the values are directly in the input fields.
-
-    // The antd DatePicker for range will have two input elements.
-    // One for start date and one for end date.
-    // We expect their values to be formatted as YYYY-MM-DD
-    expect(screen.getByDisplayValue(formatDate(initialValues.dateRange.from))).toBeInTheDocument();
-    expect(screen.getByDisplayValue(formatDate(initialValues.dateRange.to))).toBeInTheDocument();
+    // AntD RangePicker renders two input fields for start and end dates.
+    // Their value attribute holds the formatted date string.
+    expect(screen.getByDisplayValue(initialValues.dates[0])).toBeInTheDocument();
+    expect(screen.getByDisplayValue(initialValues.dates[1])).toBeInTheDocument();
     
     expect(screen.getByRole('button', {name: /Update Trip/i})).toBeInTheDocument();
   });
