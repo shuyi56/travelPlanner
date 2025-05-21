@@ -13,6 +13,8 @@ import { BaseTripEvent, TripEvent } from "./TripEventTypes";
 import { ActivityIdea } from "../Ideas/idea_types/ActivityIdea";
 import AddressSearch from "../shared/AddressSearch";
 import dayjs, { Dayjs } from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
 
 // Add helper for handling nullable numbers
 const handleNumberChange = (
@@ -562,3 +564,8 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
       return <>{commonFields}</>;
   }
 };
+
+// Add this function export for compatibility with tests
+export function eventFormBuilder(props: EventFormBuilderProps) {
+  return <EventFormBuilder {...props} />;
+}
