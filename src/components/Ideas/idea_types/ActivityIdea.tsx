@@ -1,7 +1,8 @@
 import React from "react";
-import { Form, Input, AutoComplete, theme, Typography, Segmented } from "antd";
+import { Form, Input, theme, Typography, Segmented } from "antd";
 import { DollarRating } from "../../shared/DollarRating";
 import { BaseIdea, BaseIdeaCard, BaseIdeaForm } from "./BaseIdea";
+import AddressSearch from "../../shared/AddressSearch";
 
 export interface ActivityIdea extends BaseIdea {
   duration?: string;
@@ -38,7 +39,7 @@ export const ActivityIdeaForm: React.FC = () => {
         <DollarRating />
       </Form.Item>
       <Form.Item name="location" label="Location">
-        <AutoComplete options={[]} placeholder="Type to search location" />
+        <AddressSearch placeholder="Type to search location" />
       </Form.Item>
       <Form.Item name="difficulty" label="Difficulty Level">
         <Segmented

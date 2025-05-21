@@ -95,3 +95,19 @@ export function ideaFactory(category: string, name: string): BaseIdea {
       return { name, photos: [] };
   }
 }
+
+// Represents the entire state of the Ideas component
+export interface IdeasAppState {
+  ideas: any[];
+  selectedIdx: number | null;
+  isCreating: boolean;
+  creatingSublist: number | null;
+  showOutline: boolean;
+  editingSubitem: any;
+  flippedCards: Record<string, boolean>;
+  fileList: any[];
+  selectedSubitemIdx: number | null;
+  expandedCard: any;
+  drawerVisible: boolean;
+  breakpoint: number;
+}

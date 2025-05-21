@@ -5,12 +5,12 @@ import {
   Button,
   Form,
   TimePicker,
-  AutoComplete,
   Segmented,
   theme,
 } from "antd";
 import { DollarRating } from "../../shared/DollarRating";
 import { BaseIdea, BaseIdeaCard, BaseIdeaForm } from "./BaseIdea";
+import AddressSearch from "../../shared/AddressSearch";
 
 export interface TravelIdea extends BaseIdea {
   transportType?: string;
@@ -87,11 +87,7 @@ export const TravelIdeaForm: React.FC = () => (
         style={{ margin: 0 }}
         rules={[{ required: true, message: "Please enter departure location" }]}
       >
-        <AutoComplete
-          options={[]}
-          placeholder="Departure"
-          style={{ width: "100%" }}
-        />
+        <AddressSearch placeholder="Departure" />
       </Form.Item>
       <Form.Item
         name="duration"
@@ -112,11 +108,7 @@ export const TravelIdeaForm: React.FC = () => (
         style={{ margin: 0 }}
         rules={[{ required: true, message: "Please enter arrival location" }]}
       >
-        <AutoComplete
-          options={[]}
-          placeholder="Arrival"
-          style={{ width: "100%" }}
-        />
+        <AddressSearch placeholder="Arrival" />
       </Form.Item>
     </div>
     <Form.Item name="cost" label="Estimated Cost">

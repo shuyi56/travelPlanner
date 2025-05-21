@@ -1,7 +1,8 @@
 import React from "react";
-import { Form, Input, AutoComplete, Typography, Button, theme } from "antd";
+import { Form, Input, Typography, Button, theme } from "antd";
 import { DollarRating } from "../../shared/DollarRating";
 import { BaseIdea, BaseIdeaCard, BaseIdeaForm } from "./BaseIdea";
+import AddressSearch from "../../shared/AddressSearch";
 
 export interface EatingIdea extends BaseIdea {
   cuisine?: string;
@@ -28,7 +29,7 @@ export const EatingIdeaForm: React.FC = () => (
       <DollarRating />
     </Form.Item>
     <Form.Item name="address" label="Address">
-      <AutoComplete options={[]} placeholder="Type to search address" />
+      <AddressSearch placeholder="Type to search address" />
     </Form.Item>
   </BaseIdeaForm>
 );
