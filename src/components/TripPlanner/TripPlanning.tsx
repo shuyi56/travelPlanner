@@ -16,6 +16,8 @@ import {
   Row,
   Col,
   Drawer,
+  Breadcrumb,
+  Dropdown,
 } from "antd";
 import {
   CarOutlined,
@@ -26,6 +28,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   EllipsisOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { MdFlight } from "react-icons/md";
 import dayjs, { Dayjs } from "dayjs";
@@ -38,9 +41,10 @@ import {
   AccommodationTripEvent,
   ActivityTripEvent,
 } from "./TripEventTypes";
-import { eventFormBuilder } from "./EventFormBuilder";
+import { EventFormBuilder } from "./EventFormBuilder";
 import { eventTypeIcons } from "../shared/EventTypeIcons";
 import AddressImage from "../shared/AddressImage";
+import { useParams } from "react-router-dom";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -165,6 +169,11 @@ function getEventFormState(
 }
 
 function TripPlanning() {
+  const { id } = useParams<{ id: string }>();
+  const [storedTrips, setStoredTrips] = useState(() => {
+    const stored = localStorage.getItem("trips");
+    return stored ? JSON.parse(stored) : [];
+  });
   const [step, setStep] = useState<number>(0);
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
   const [events, setEvents] = useState<Record<string, TripEvent[]>>({});
@@ -218,6 +227,10 @@ function TripPlanning() {
       desc: "",
       description: "",
     });
+  const [isEventFormSubmitted, setIsEventFormSubmitted] = useState(false);
+
+  // Add a state to track the edited event details in the modal
+  const [editEventDetails, setEditEventDetails] = useState<any>(null);
 
   // Ant Design theme for dark/light mode
   const { token } = theme.useToken();
@@ -248,6 +261,18 @@ function TripPlanning() {
 
   // Stage 2: Add Events
   const openAddEvent = (date: string) => {
+    const dayEvents = events[date] || [];
+    let latestEndTime: Dayjs | null = null;
+    if (dayEvents.length > 0) {
+      // Find the latest endTime (ignoring null/undefined)
+      latestEndTime =
+        dayEvents
+          .map((ev) => ev.endTime)
+          .filter((t): t is Dayjs => !!t)
+          .sort((a, b) => dayjs(a).diff(dayjs(b)))[dayEvents.length - 1] ||
+        null;
+    }
+
     setEventInput("");
     setEventType("Other");
     setEventDetails({
@@ -255,7 +280,7 @@ function TripPlanning() {
       to: "",
       depTime: null,
       arrTime: null,
-      beginTime: null,
+      beginTime: latestEndTime,
       endTime: null,
       mapsLink: "",
       description: "",
@@ -264,7 +289,14 @@ function TripPlanning() {
   };
 
   const handleAddEvent = () => {
-    if (!eventInput.trim() || !eventModal.date) return;
+    setIsEventFormSubmitted(true);
+    if (
+      !eventInput.trim() ||
+      !eventModal.date ||
+      !eventDetails.beginTime ||
+      !eventDetails.endTime
+    )
+      return;
     const baseEvent = {
       name: eventInput.trim(),
       description: eventDetails.description,
@@ -309,7 +341,7 @@ function TripPlanning() {
     }
     setEvents((prev) => ({
       ...prev,
-      [eventModal.date!]: [...prev[eventModal.date!], event],
+      [eventModal.date!]: [...(prev[eventModal.date!] || []), event],
     }));
     setEventModal({ open: false, date: null });
     setEventInput("");
@@ -324,6 +356,8 @@ function TripPlanning() {
       mapsLink: "",
       description: "",
     });
+    // Reset the submitted state after successful submission
+    setIsEventFormSubmitted(false);
   };
 
   const handleAddDestination = () => {
@@ -357,6 +391,7 @@ function TripPlanning() {
     }
   };
 
+  // When opening the event details modal, initialize editEventDetails
   const handleViewEventDetails = (
     date: string,
     index: number,
@@ -377,10 +412,30 @@ function TripPlanning() {
       desc: event.name,
       description: (event as any).description || "",
     });
+    setEditEventDetails({
+      ...event,
+      ...eventDetailsView,
+      name: event.name,
+      from: (event as any).from || "",
+      to: (event as any).to || "",
+      depTime: (event as any).depTime || null,
+      arrTime: (event as any).arrTime || null,
+      beginTime: event.beginTime || null,
+      endTime: event.endTime || null,
+      mapsLink: (event as any).mapsLink || "",
+      description: (event as any).description || "",
+      desc: event.name,
+    });
   };
 
+  // Update handleUpdateEventDetails to use editEventDetails
   const handleUpdateEventDetails = () => {
-    if (!eventDetailsView.date || eventDetailsView.eventIndex < 0) return;
+    if (
+      !eventDetailsView.date ||
+      eventDetailsView.eventIndex < 0 ||
+      !editEventDetails
+    )
+      return;
 
     setEvents((prev) => ({
       ...prev,
@@ -388,20 +443,22 @@ function TripPlanning() {
         idx === eventDetailsView.eventIndex
           ? {
               ...ev,
-              description: eventDetailsView.description,
-              from: eventDetailsView.from ?? (ev as any).from,
-              to: eventDetailsView.to ?? (ev as any).to,
-              depTime: eventDetailsView.depTime ?? (ev as any).depTime,
-              arrTime: eventDetailsView.arrTime ?? (ev as any).arrTime,
-              beginTime: eventDetailsView.beginTime,
-              endTime: eventDetailsView.endTime,
-              mapsLink: eventDetailsView.mapsLink,
-              name: eventDetailsView.desc || "",
+              ...editEventDetails,
+              name: editEventDetails.desc ?? editEventDetails.name ?? "",
+              description: editEventDetails.description,
+              from: editEventDetails.from ?? (ev as any).from,
+              to: editEventDetails.to ?? (ev as any).to,
+              depTime: editEventDetails.depTime ?? (ev as any).depTime,
+              arrTime: editEventDetails.arrTime ?? (ev as any).arrTime,
+              beginTime: editEventDetails.beginTime,
+              endTime: editEventDetails.endTime,
+              mapsLink: editEventDetails.mapsLink,
             }
           : ev
       ),
     }));
     setEventDetailsView((prev) => ({ ...prev, open: false }));
+    setEditEventDetails(null);
   };
 
   const handleDeleteEvent = (date: string, index: number) => {
@@ -445,8 +502,75 @@ function TripPlanning() {
     // eslint-disable-next-line
   }, [step, destinations, activeDestination]);
 
+  // Set tripDetails from id on mount or id change
+  React.useEffect(() => {
+    if (id && storedTrips.length > 0) {
+      const found = storedTrips.find((t: any) => t.id === id);
+      if (found) {
+        const parsedDates = found.dates
+          ? [dayjs(found.dates[0]), dayjs(found.dates[1])]
+          : undefined;
+        setTripDetails({
+          ...found,
+          dates: parsedDates,
+          days:
+            found.days ||
+            (parsedDates
+              ? getDatesInRange(parsedDates[0], parsedDates[1])
+              : []),
+        });
+        setDestinations([]);
+        setEvents({});
+        setStep(1);
+      }
+    }
+    // eslint-disable-next-line
+  }, [id, storedTrips]);
+
+  // Handler to switch trip details when a trip is selected from dropdown
+  const handleSelectTrip = (trip: any) => {
+    const parsedDates = trip.dates
+      ? [dayjs(trip.dates[0]), dayjs(trip.dates[1])]
+      : undefined;
+    setTripDetails({
+      ...trip,
+      dates: parsedDates,
+      days:
+        trip.days ||
+        (parsedDates ? getDatesInRange(parsedDates[0], parsedDates[1]) : []),
+    });
+    setDestinations([]);
+    setEvents({});
+    setStep(1);
+    // Optionally update the URL if you want to reflect the trip id in the route
+    // navigate(`/trip-planning/${trip.id}`);
+  };
+
+  const breadcrumbItems = [
+    { title: "Home" },
+    {
+      title: (
+        <Dropdown
+          menu={{
+            items: storedTrips.map((trip: any) => ({
+              key: trip.id,
+              label: trip.tripName,
+              onClick: () => handleSelectTrip(trip),
+            })),
+          }}
+        >
+          <span style={{ cursor: "pointer" }}>
+            {tripDetails ? tripDetails.tripName : "Select a Trip"}{" "}
+            <DownOutlined />
+          </span>
+        </Dropdown>
+      ),
+    },
+  ];
+
   return (
     <Card title="Trip Planning" variant="borderless">
+      <Breadcrumb items={breadcrumbItems} style={{ marginBottom: 16 }} />
       <div style={{ display: "flex" }}>
         <div
           style={{
@@ -781,16 +905,19 @@ function TripPlanning() {
           </Select>
         </div>
         <Form layout="vertical">
-          {eventFormBuilder({
-            event: getEventFormState(eventType, eventInput, eventDetails),
-            onChange: (changed) => {
+          <EventFormBuilder
+            event={getEventFormState(eventType, eventInput, eventDetails)}
+            onChange={(changed) => {
               if ("name" in changed) {
                 setEventInput(changed.name ?? "");
               } else {
                 setEventDetails((prev) => ({ ...prev, ...changed }));
               }
-            },
-          })}
+            }}
+            isSubmitted={isEventFormSubmitted}
+            existingEvents={eventModal.date ? events[eventModal.date] : []}
+            currentIndex={undefined}
+          />
         </Form>
       </Drawer>
 
@@ -845,34 +972,40 @@ function TripPlanning() {
         title="Event Details"
         open={eventDetailsView.open}
         onOk={handleUpdateEventDetails}
-        onCancel={() =>
-          setEventDetailsView((prev) => ({ ...prev, open: false }))
-        }
+        onCancel={() => {
+          setEventDetailsView((prev) => ({ ...prev, open: false }));
+          setEditEventDetails(null);
+        }}
         okText="Save Changes"
         getContainer={false}
       >
         <Form layout="vertical">
-          {eventDetailsView.event &&
-            eventFormBuilder({
-              event: {
-                ...eventDetailsView.event,
-                ...eventDetailsView,
-                name: eventDetailsView.desc ?? eventDetailsView.event.name,
-              },
-              onChange: (changed) => {
-                if ("name" in changed) {
-                  setEventDetailsView((prev) => ({
-                    ...prev,
-                    desc: changed.name ?? "",
-                  }));
-                } else {
-                  setEventDetailsView((prev) => ({
-                    ...prev,
-                    ...changed,
-                  }));
+          {eventDetailsView.event && (
+            <EventFormBuilder
+              event={
+                editEventDetails || {
+                  ...eventDetailsView.event,
+                  ...eventDetailsView,
+                  name: eventDetailsView.desc ?? eventDetailsView.event.name,
                 }
-              },
-            })}
+              }
+              onChange={(changed) => {
+                setEditEventDetails((prev: any) => ({
+                  ...((prev as any) || {
+                    ...eventDetailsView.event,
+                    ...eventDetailsView,
+                    name: eventDetailsView.desc ?? eventDetailsView.event.name,
+                  }),
+                  ...changed,
+                }));
+              }}
+              isSubmitted={isEventFormSubmitted}
+              existingEvents={
+                eventDetailsView.date ? events[eventDetailsView.date] : []
+              }
+              currentIndex={eventDetailsView.eventIndex}
+            />
+          )}
         </Form>
       </Modal>
     </Card>

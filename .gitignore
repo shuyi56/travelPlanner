@@ -26,3 +26,6 @@ build/
 # Dependency directories
 .pnpm/
 .cache/
+
+# Ignore photos directory in services
+services/maps_service/photos/

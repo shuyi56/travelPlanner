@@ -1,17 +1,24 @@
 import React from "react";
 import { Card, Row, Col, Button, Typography, Form, Modal } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import TripCard from "./TripCard.tsx";
-import TripForm from "./TripForm.tsx";
-import { Trip } from "./types.ts";
+import TripCard from "./TripCard";
+import TripForm from "./TripForm";
+import { Trip } from "./types";
 import { redirect } from "react-router-dom";
 
 const { Title } = Typography;
 
 const Trips: React.FC = () => {
-  const [trips, setTrips] = React.useState<Trip[]>([]);
+  const [trips, setTrips] = React.useState<Trip[]>(() => {
+    const stored = localStorage.getItem("trips");
+    return stored ? JSON.parse(stored) : [];
+  });
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingTrip, setEditingTrip] = React.useState<Trip | null>(null);
+
+  React.useEffect(() => {
+    localStorage.setItem("trips", JSON.stringify(trips));
+  }, [trips]);
 
   const handleCreateTrip = (values: Trip) => {
     if (editingTrip) {
