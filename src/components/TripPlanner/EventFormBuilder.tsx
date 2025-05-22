@@ -227,6 +227,14 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
           placeholder="Add a description for this event..."
         />
       </Form.Item>
+      <Form.Item label="Notes" style={{ marginBottom: 12 }}>
+        <Input.TextArea
+          value={event.notes}
+          onChange={(e) => onChange({ notes: e.target.value })}
+          rows={2}
+          placeholder="Add any relevant notes..."
+        />
+      </Form.Item>
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item
@@ -293,6 +301,13 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
               </Form.Item>
             </Col>
           </Row>
+          <Form.Item label="Booking Reference" style={{ marginBottom: 12 }}>
+            <Input
+              value={event.bookingReference}
+              onChange={(e) => onChange({ bookingReference: e.target.value })}
+              placeholder="e.g., Conf #12345"
+            />
+          </Form.Item>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label="From" style={{ marginBottom: 12 }}>
@@ -320,6 +335,34 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
               prefix="$"
               precision={2}
               style={{ width: "50%" }}
+            />
+          </Form.Item>
+        </>
+      );
+    case "Meeting":
+      return (
+        <>
+          {commonFields}
+          <Form.Item label="Location" style={{ marginBottom: 12 }}>
+            <AddressSearch
+              placeholder="Meeting location"
+              onSelect={(address) => onChange({ location: address })}
+            />
+          </Form.Item>
+          <Form.Item label="Attendees" style={{ marginBottom: 12 }}>
+            <Input
+              value={event.attendees}
+              onChange={(e) => onChange({ attendees: e.target.value })}
+              placeholder="e.g., John Doe, Jane Smith"
+            />
+          </Form.Item>
+          <Form.Item label="Agenda" name="agenda" style={{ marginBottom: 12 }}>
+            <Input.TextArea
+              id="agenda"
+              value={event.agenda}
+              onChange={(e) => onChange({ agenda: e.target.value })}
+              rows={3}
+              placeholder="Meeting agenda or purpose..."
             />
           </Form.Item>
         </>
@@ -354,6 +397,13 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
               </Form.Item>
             </Col>
           </Row>
+          <Form.Item label="Reservation Details" style={{ marginBottom: 12 }}>
+            <Input
+              value={event.reservationDetails}
+              onChange={(e) => onChange({ reservationDetails: e.target.value })}
+              placeholder="e.g., Reservation for John Doe at 7 PM"
+            />
+          </Form.Item>
           <Form.Item label="Address" style={{ marginBottom: 12 }}>
             <AddressSearch
               placeholder="Address"
@@ -391,6 +441,14 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
               </Form.Item>
             </Col>
           </Row>
+          <Form.Item label="Room Details" style={{ marginBottom: 12 }}>
+            <Input
+              value={event.roomDetails}
+              onChange={(e) => onChange({ roomDetails: e.target.value })}
+              placeholder="e.g., Room 101, King Bed"
+            />
+          </Form.Item>
+          {/* Remove Room Details from Sightseeing - it was incorrectly placed here */}
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label="Opening Hours" style={{ marginBottom: 12 }}>
@@ -443,10 +501,20 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
               </Form.Item>
             </Col>
           </Row>
+          {/* Ensure Room Details is in Accommodation, it should be from previous diffs if they were correct */}
+          {/* If it's missing from Accommodation, this diff won't add it, would need another targeted diff. */}
+          {/* For now, focusing on removing from Sightseeing and adding ID to Agenda. */}
           <Form.Item label="Address" style={{ marginBottom: 12 }}>
             <AddressSearch
               placeholder="Address"
               onSelect={(address) => onChange({ address })}
+            />
+          </Form.Item>
+          <Form.Item label="Room Details" style={{ marginBottom: 12 }}>
+            <Input
+              value={event.roomDetails}
+              onChange={(e) => onChange({ roomDetails: e.target.value })}
+              placeholder="e.g., Room 101, King Bed"
             />
           </Form.Item>
           <Row gutter={16}>
@@ -496,6 +564,14 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
             <AddressSearch
               placeholder="Location"
               onSelect={(address) => onChange({ location: address })}
+            />
+          </Form.Item>
+          <Form.Item label="Equipment Needed" style={{ marginBottom: 12 }}>
+            <Input.TextArea
+              value={event.equipmentNeeded}
+              onChange={(e) => onChange({ equipmentNeeded: e.target.value })}
+              rows={2}
+              placeholder="e.g., Hiking boots, water bottle"
             />
           </Form.Item>
           <Form.Item label="Difficulty Level" style={{ marginBottom: 12 }}>

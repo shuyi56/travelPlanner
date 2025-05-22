@@ -6,6 +6,7 @@ export interface BaseTripEvent {
   name: string;
   photos?: string[];
   description?: string; // Add description field
+  notes?: string;
   beginTime?: Dayjs | null;
   endTime?: Dayjs | null;
 }
@@ -17,6 +18,7 @@ export interface TravelTripEvent extends BaseTripEvent {
   from?: string;
   to?: string;
   cost?: number;
+  bookingReference?: string;
 }
 
 // Eating
@@ -25,6 +27,7 @@ export interface EatingTripEvent extends BaseTripEvent {
   cuisine?: string;
   price?: number;
   address?: string;
+  reservationDetails?: string;
 }
 
 // Sightseeing
@@ -44,6 +47,7 @@ export interface AccommodationTripEvent extends BaseTripEvent {
   address?: string;
   checkIn?: string;
   checkOut?: string;
+  roomDetails?: string;
 }
 
 // Activity
@@ -52,6 +56,15 @@ export interface ActivityTripEvent extends BaseTripEvent {
   price?: number;
   location?: string;
   difficulty?: ActivityIdea["difficulty"];
+  equipmentNeeded?: string;
+}
+
+// Meeting
+export interface MeetingTripEvent extends BaseTripEvent {
+  type: "Meeting";
+  location?: string; // Will use AddressSearch, so keep as string for address
+  attendees?: string;
+  agenda?: string;
 }
 
 // Union type for all trip events
@@ -60,4 +73,5 @@ export type TripEvent =
   | EatingTripEvent
   | SightseeingTripEvent
   | AccommodationTripEvent
-  | ActivityTripEvent;
+  | ActivityTripEvent
+  | MeetingTripEvent; // Added here
