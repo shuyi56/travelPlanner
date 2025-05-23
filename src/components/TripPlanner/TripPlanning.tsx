@@ -91,6 +91,8 @@ interface EventDetailsViewState {
   mapsLink?: string;
   desc?: string;
   description?: string;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 function getDatesInRange(start: Dayjs, end: Dayjs): string[] {
@@ -114,6 +116,8 @@ function getEventFormState(
     description: details.description,
     beginTime: details.beginTime,
     endTime: details.endTime,
+    minPrice: details.minPrice, // Changed from price to minPrice
+    maxPrice: details.maxPrice, // Added maxPrice
   };
 
   switch (eventType) {
@@ -132,7 +136,6 @@ function getEventFormState(
         type: "Eating",
         ...baseFields,
         cuisine: details.cuisine,
-        price: details.price,
         address: details.address,
       };
     case "Sightseeing":
@@ -140,7 +143,6 @@ function getEventFormState(
         type: "Sightseeing",
         ...baseFields,
         location: details.location,
-        price: details.price,
         openingHours: details.openingHours,
         bestTime: details.bestTime,
       };
@@ -149,7 +151,6 @@ function getEventFormState(
         type: "Accommodation",
         ...baseFields,
         typeName: details.typeName,
-        price: details.price,
         address: details.address,
         checkIn: details.checkIn,
         checkOut: details.checkOut,
@@ -161,7 +162,6 @@ function getEventFormState(
         type: "Activity",
         ...baseFields,
         duration: details.duration,
-        price: details.price,
         location: details.location,
         difficulty: details.difficulty,
       };
@@ -192,6 +192,8 @@ function TripPlanning() {
     endTime?: Dayjs | null;
     mapsLink?: string;
     description?: string;
+    minPrice?: number; // Add these lines
+    maxPrice?: number; // Add these lines
   }>({
     from: "",
     to: "",
@@ -201,6 +203,8 @@ function TripPlanning() {
     endTime: null,
     mapsLink: "",
     description: "",
+    minPrice: undefined,
+    maxPrice: undefined,
   });
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [destinationModal, setDestinationModal] =
@@ -240,6 +244,7 @@ function TripPlanning() {
 
   // Stage 1: Trip Details
   const [form] = Form.useForm();
+  const [destinationForm] = Form.useForm(); // Add new form for destination
 
   const handleTripDetails = (values: {
     tripName: string;
@@ -284,6 +289,18 @@ function TripPlanning() {
       endTime: null,
       mapsLink: "",
       description: "",
+      minPrice: undefined,
+      maxPrice: undefined,
+      address: "", // <-- reset address
+      location: "", // <-- reset location
+      cuisine: "", // <-- reset cuisine (optional, for Eating)
+      openingHours: "", // <-- reset openingHours (optional, for Sightseeing)
+      bestTime: "", // <-- reset bestTime (optional, for Sightseeing)
+      typeName: "", // <-- reset typeName (optional, for Accommodation)
+      checkIn: "", // <-- reset checkIn (optional, for Accommodation)
+      checkOut: "", // <-- reset checkOut (optional, for Accommodation)
+      difficulty: "", // <-- reset difficulty (optional, for Activity)
+      duration: "", // <-- reset duration (optional, for Activity)
     });
     setEventModal({ open: true, date });
   };
@@ -302,6 +319,8 @@ function TripPlanning() {
       description: eventDetails.description,
       beginTime: eventDetails.beginTime,
       endTime: eventDetails.endTime,
+      minPrice: eventDetails.minPrice,
+      maxPrice: eventDetails.maxPrice,
     };
 
     let event: TripEvent;
@@ -309,40 +328,44 @@ function TripPlanning() {
       event = {
         type: "Travel",
         ...baseEvent,
-        transportType: eventType === "Flight" ? "Flight" : undefined,
-        from: eventDetails.from,
-        to: eventDetails.to,
+        ...eventDetails, // Ensure all additional fields are included
       } as TravelTripEvent;
     } else if (eventType === "Eating") {
       event = {
         type: "Eating",
         ...baseEvent,
+        ...eventDetails, // Include cuisine, address, etc.
       } as EatingTripEvent;
     } else if (eventType === "Sightseeing") {
       event = {
         type: "Sightseeing",
         ...baseEvent,
+        ...eventDetails, // Include location, openingHours, bestTime, etc.
       } as SightseeingTripEvent;
     } else if (eventType === "Accommodation") {
       event = {
         type: "Accommodation",
         ...baseEvent,
+        ...eventDetails, // Include typeName, address, checkIn, checkOut, etc.
       } as AccommodationTripEvent;
     } else if (eventType === "Activity") {
       event = {
         type: "Activity",
         ...baseEvent,
+        ...eventDetails, // Include duration, location, difficulty, etc.
       } as ActivityTripEvent;
     } else {
       event = {
         type: "Activity",
         ...baseEvent,
+        ...eventDetails,
       } as ActivityTripEvent;
     }
     setEvents((prev) => ({
       ...prev,
       [eventModal.date!]: [...(prev[eventModal.date!] || []), event],
     }));
+    console.log(events);
     setEventModal({ open: false, date: null });
     setEventInput("");
     setEventType("Other");
@@ -381,6 +404,28 @@ function TripPlanning() {
       name: "",
       imageUrl: undefined,
     });
+    destinationForm.resetFields();
+  };
+
+  // Add a function to handle the numDays change
+  const handleNumDaysChange = (val: number | null) => {
+    const newValue = val || 1;
+    setDestinationModal((prev) => ({
+      ...prev,
+      numDays: newValue,
+    }));
+    destinationForm.setFieldValue("numDays", newValue);
+  };
+
+  // Modify handleDestinationModalCancel to initialize form with current values
+  const handleDestinationModalCancel = () => {
+    setDestinationModal({
+      open: false,
+      numDays: 1,
+      name: "",
+      imageUrl: undefined,
+    });
+    destinationForm.resetFields();
   };
 
   const handleStepClick = (id: string) => {
@@ -410,11 +455,12 @@ function TripPlanning() {
       endTime: event.endTime || null,
       mapsLink: (event as any).mapsLink || "",
       desc: event.name,
-      description: (event as any).description || "",
+      description: event.description || "",
+      minPrice: event.minPrice,
+      maxPrice: event.maxPrice,
     });
     setEditEventDetails({
       ...event,
-      ...eventDetailsView,
       name: event.name,
       from: (event as any).from || "",
       to: (event as any).to || "",
@@ -423,8 +469,10 @@ function TripPlanning() {
       beginTime: event.beginTime || null,
       endTime: event.endTime || null,
       mapsLink: (event as any).mapsLink || "",
-      description: (event as any).description || "",
+      description: event.description || "",
       desc: event.name,
+      minPrice: event.minPrice,
+      maxPrice: event.maxPrice,
     });
   };
 
@@ -453,6 +501,8 @@ function TripPlanning() {
               beginTime: editEventDetails.beginTime,
               endTime: editEventDetails.endTime,
               mapsLink: editEventDetails.mapsLink,
+              minPrice: editEventDetails.minPrice, // Add these lines
+              maxPrice: editEventDetails.maxPrice, // Add these lines
             }
           : ev
       ),
@@ -587,22 +637,24 @@ function TripPlanning() {
             zIndex: 1,
           }}
         >
-          <Button
-            type="primary"
-            onClick={() =>
-              setDestinationModal({ ...destinationModal, open: true })
-            }
-            style={{
-              marginBottom: 32,
-              width: "90%",
-              fontSize: 18,
-              padding: "16px 0",
-            }}
-            size="large"
-            block
-          >
-            Add Destination
-          </Button>
+          {tripDetails && (
+            <Button
+              type="primary"
+              onClick={() =>
+                setDestinationModal({ ...destinationModal, open: true })
+              }
+              style={{
+                marginBottom: 32,
+                width: "90%",
+                fontSize: 18,
+                padding: "16px 0",
+              }}
+              size="large"
+              block
+            >
+              Add Destination
+            </Button>
+          )}
           <AntSteps
             style={{ height: "100%" }}
             direction="vertical"
@@ -925,18 +977,15 @@ function TripPlanning() {
         title="Add Destination"
         open={destinationModal.open}
         onOk={handleAddDestination}
-        onCancel={() =>
-          setDestinationModal({
-            open: false,
-            numDays: 1,
-            name: "",
-            imageUrl: undefined,
-          })
-        }
+        onCancel={handleDestinationModalCancel}
         getContainer={false}
       >
-        <Form layout="vertical">
-          <Form.Item label="Destination" required>
+        <Form
+          form={destinationForm}
+          layout="vertical"
+          initialValues={{ numDays: destinationModal.numDays }}
+        >
+          <Form.Item label="Destination" required name="destination">
             <AddressImage
               onSelect={(
                 address: string,
@@ -951,17 +1000,11 @@ function TripPlanning() {
               }
             />
           </Form.Item>
-          <Form.Item label="Number of Days" required>
+          <Form.Item label="Number of Days" required name="numDays">
             <InputNumber
               min={1}
               max={tripDetails?.days.length || 1}
-              value={destinationModal.numDays}
-              onChange={(val) =>
-                setDestinationModal((prev) => ({
-                  ...prev,
-                  numDays: val || 1,
-                }))
-              }
+              onChange={handleNumDaysChange}
               style={{ width: "100%" }}
             />
           </Form.Item>
@@ -986,7 +1029,8 @@ function TripPlanning() {
                 editEventDetails || {
                   ...eventDetailsView.event,
                   ...eventDetailsView,
-                  name: eventDetailsView.desc ?? eventDetailsView.event.name,
+                  name:
+                    eventDetailsView.desc ?? eventDetailsView.event?.name ?? "",
                 }
               }
               onChange={(changed) => {
@@ -994,7 +1038,10 @@ function TripPlanning() {
                   ...((prev as any) || {
                     ...eventDetailsView.event,
                     ...eventDetailsView,
-                    name: eventDetailsView.desc ?? eventDetailsView.event.name,
+                    name:
+                      eventDetailsView.desc ??
+                      eventDetailsView.event?.name ??
+                      "",
                   }),
                   ...changed,
                 }));

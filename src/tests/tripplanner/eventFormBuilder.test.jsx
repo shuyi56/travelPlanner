@@ -71,6 +71,49 @@ describe('eventFormBuilder', () => {
     // format 'HH:mm'
     expect(screen.getByDisplayValue(baseEventData.beginTime.format('HH:mm'))).toBeInTheDocument();
     expect(screen.getByDisplayValue(baseEventData.endTime.format('HH:mm'))).toBeInTheDocument();
+
+    // Add checks for price range fields
+    expect(screen.getByText('Min Price')).toBeInTheDocument();
+    expect(screen.getByText('Max Price')).toBeInTheDocument();
+  });
+
+  // Add new test for price range validation
+  it('shows validation error when max price is less than min price', async () => {
+    const formUI = eventFormBuilder({
+      event: { ...baseEventData, minPrice: 100, maxPrice: 50 },
+      onChange: mockOnChange
+    });
+    const TestHost = () => <form>{formUI}</form>;
+    render(<TestHost />);
+
+    // Get price inputs
+    const maxPriceInput = screen.getByRole('spinbutton', { name: /max price/i });
+    
+    // Trigger blur to show validation
+    await userEvent.click(maxPriceInput);
+    await userEvent.tab(); // Move focus away to trigger blur
+
+    // Check for error message
+    expect(screen.getByText('Maximum price cannot be less than minimum price')).toBeInTheDocument();
+  });
+
+  it('shows validation error when min price is greater than max price', async () => {
+    const formUI = eventFormBuilder({
+      event: { ...baseEventData, minPrice: 150, maxPrice: 100 },
+      onChange: mockOnChange
+    });
+    const TestHost = () => <form>{formUI}</form>;
+    render(<TestHost />);
+
+    // Get price inputs
+    const minPriceInput = screen.getByRole('spinbutton', { name: /min price/i });
+    
+    // Trigger blur to show validation
+    await userEvent.click(minPriceInput);
+    await userEvent.tab(); // Move focus away to trigger blur
+
+    // Check for error message
+    expect(screen.getByText('Minimum price cannot be greater than maximum price')).toBeInTheDocument();
   });
 
   it('calls onChange for Name field', async () => {
@@ -135,7 +178,8 @@ describe('eventFormBuilder', () => {
       transportType: 'Train',
       from: { formatted_address: 'Station A' }, // Simplified for initial rendering check
       to: { formatted_address: 'Station B' }, // Simplified for initial rendering check
-      cost: 100,
+      minPrice: 80,  // Add these fields
+      maxPrice: 120, // instead of cost
     };
 
     it('renders common and Travel-specific fields', () => {
@@ -157,9 +201,11 @@ describe('eventFormBuilder', () => {
       expect(screen.getByText('To')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('To')).toBeInTheDocument();
 
-      expect(screen.getByText('Cost')).toBeInTheDocument();
-      // Find the spinbutton by its current value if the label association is problematic
-      expect(screen.getByRole('spinbutton', { valueNow: travelEventData.cost.toString() })).toBeInTheDocument();
+      expect(screen.getByText('Min Price')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: /min price/i })).toHaveValue('80.00');
+
+      expect(screen.getByText('Max Price')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: /max price/i })).toHaveValue('120.00');
     });
 
     it('calls onChange for Transport Type field (Travel)', async () => {
@@ -171,17 +217,24 @@ describe('eventFormBuilder', () => {
       expect(mockOnChange).toHaveBeenLastCalledWith({ transportType: 'Bus' });
     });
 
-    it('calls onChange for Cost field (Travel - InputNumber)', async () => {
+    it('calls onChange for price range fields', async () => {
       const formUI = eventFormBuilder({ event: travelEventData, onChange: mockOnChange });
       const TestHost = () => <form>{formUI}</form>;
       render(<TestHost />);
-      const costInput = screen.getByRole('spinbutton', { valueNow: travelEventData.cost.toString() });
-      await userEvent.click(costInput);
-      await userEvent.keyboard('{Control>}a{/Control}{Backspace}');
-      await userEvent.type(costInput, '125');
-      // Clicking outside to ensure blur.
-      await userEvent.click(document.body);
-      expect(mockOnChange).toHaveBeenLastCalledWith({ cost: 125 });
+
+      const minPriceInput = screen.getByRole('spinbutton', { name: /min price/i });
+      await userEvent.clear(minPriceInput);
+      await userEvent.type(minPriceInput, '90');
+      await userEvent.tab();
+
+      expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ minPrice: 90 }));
+
+      const maxPriceInput = screen.getByRole('spinbutton', { name: /max price/i });
+      await userEvent.clear(maxPriceInput);
+      await userEvent.type(maxPriceInput, '150');
+      await userEvent.tab();
+
+      expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ maxPrice: 150 }));
     });
 
     it('calls onChange for "From" AddressSearch field (Travel)', async () => {
@@ -208,7 +261,8 @@ describe('eventFormBuilder', () => {
       beginTime: dayjs('19:00', 'HH:mm'),
       endTime: dayjs('20:30', 'HH:mm'),
       cuisine: 'Italian',
-      price: 50,
+      minPrice: 40,  // Replace price with minPrice/maxPrice
+      maxPrice: 60,
       address: { formatted_address: '123 Food St' },
     };
 
@@ -220,8 +274,10 @@ describe('eventFormBuilder', () => {
       expect(screen.getByDisplayValue(eatingEventData.name)).toBeInTheDocument();
       expect(screen.getByText('Cuisine')).toBeInTheDocument();
       expect(screen.getByDisplayValue(eatingEventData.cuisine)).toBeInTheDocument();
-      expect(screen.getByText('Price')).toBeInTheDocument();
-      expect(screen.getByRole('spinbutton', { valueNow: eatingEventData.price.toString() })).toBeInTheDocument();
+      expect(screen.getByText('Min Price')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: /min price/i })).toHaveValue('40.00');
+      expect(screen.getByText('Max Price')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: /max price/i })).toHaveValue('60.00');
       expect(screen.getByText('Address')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Address')).toBeInTheDocument();
     });
@@ -236,7 +292,8 @@ describe('eventFormBuilder', () => {
       beginTime: dayjs('14:00', 'HH:mm'),
       endTime: dayjs('16:00', 'HH:mm'),
       location: { formatted_address: '456 Art Ave' },
-      price: 20,
+      minPrice: 15,  // Replace price with minPrice/maxPrice
+      maxPrice: 25,
       openingHours: '10 AM - 6 PM',
       bestTime: 'Afternoon',
     };
@@ -249,8 +306,10 @@ describe('eventFormBuilder', () => {
       expect(screen.getByDisplayValue(sightseeingEventData.name)).toBeInTheDocument();
       expect(screen.getByText('Location')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Location')).toBeInTheDocument();
-      expect(screen.getByText('Price')).toBeInTheDocument();
-      expect(screen.getByRole('spinbutton', { valueNow: sightseeingEventData.price.toString() })).toBeInTheDocument();
+      expect(screen.getByText('Min Price')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: /min price/i })).toHaveValue('15.00');
+      expect(screen.getByText('Max Price')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: /max price/i })).toHaveValue('25.00');
       expect(screen.getByText('Opening Hours')).toBeInTheDocument();
       expect(screen.getByDisplayValue(sightseeingEventData.openingHours)).toBeInTheDocument();
       expect(screen.getByText('Best Time')).toBeInTheDocument();
@@ -267,7 +326,8 @@ describe('eventFormBuilder', () => {
       beginTime: dayjs('15:00', 'HH:mm'), // Check-in time as beginTime
       endTime: dayjs('11:00', 'HH:mm'),   // Check-out time as endTime
       typeName: 'Hotel',
-      price: 150,
+      minPrice: 120,  // Replace price with minPrice/maxPrice
+      maxPrice: 180,
       address: { formatted_address: '789 Hotel Rd' },
       checkIn: '3:00 PM', // These are distinct from begin/end time in some models
       checkOut: '11:00 AM',
@@ -281,8 +341,10 @@ describe('eventFormBuilder', () => {
       expect(screen.getByDisplayValue(accommodationEventData.name)).toBeInTheDocument();
       expect(screen.getByText(/^Type$/i)).toBeInTheDocument(); // Check for label "Type"
       expect(screen.getByDisplayValue(accommodationEventData.typeName)).toBeInTheDocument();
-      expect(screen.getByText('Price')).toBeInTheDocument();
-      expect(screen.getByRole('spinbutton', { valueNow: accommodationEventData.price.toString() })).toBeInTheDocument();
+      expect(screen.getByText('Min Price')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: /min price/i })).toHaveValue('120.00');
+      expect(screen.getByText('Max Price')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: /max price/i })).toHaveValue('180.00');
       expect(screen.getByText('Address')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Address')).toBeInTheDocument();
       expect(screen.getByText('Check In')).toBeInTheDocument();
@@ -300,7 +362,8 @@ describe('eventFormBuilder', () => {
       description: 'Mountain trail hike',
       beginTime: dayjs('09:00', 'HH:mm'),
       endTime: dayjs('13:00', 'HH:mm'),
-      price: 0,
+      minPrice: 0,    // Replace price with minPrice/maxPrice
+      maxPrice: 0,
       location: { formatted_address: 'Mountain Trailhead' },
       difficulty: 'moderate',
     };
@@ -311,18 +374,10 @@ describe('eventFormBuilder', () => {
       render(<TestHost />);
 
       expect(screen.getByDisplayValue(activityEventData.name)).toBeInTheDocument();
-      expect(screen.getByText('Price')).toBeInTheDocument();
-      // For price 0, valueNow might be "0" or "0.00". Let's try "0".
-      // If there are multiple spinbuttons, this needs to be more specific.
-      // Assuming this is the only spinbutton or the one for Activity's price.
-      const priceSpinbuttons = screen.getAllByRole('spinbutton');
-      // This is fragile; ideally, test IDs or more specific selectors would be used.
-      // For now, let's assume the last spinbutton on this form is the relevant one.
-      // Expect "0.00" for a price of 0 due to InputNumber formatting.
-      expect(priceSpinbuttons[priceSpinbuttons.length -1]).toHaveValue(
-        activityEventData.price === 0 ? '0.00' : activityEventData.price.toString()
-      );
-
+      expect(screen.getByText('Min Price')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: 'Min Price' })).toHaveValue('0.00');
+      expect(screen.getByText('Max Price')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: 'Max Price' })).toHaveValue('0.00');
       expect(screen.getByText('Location')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Location')).toBeInTheDocument();
       expect(screen.getByText('Difficulty Level')).toBeInTheDocument();

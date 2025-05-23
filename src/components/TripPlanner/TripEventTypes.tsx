@@ -5,9 +5,11 @@ import type { ActivityIdea } from "../Ideas/idea_types/ActivityIdea";
 export interface BaseTripEvent {
   name: string;
   photos?: string[];
-  description?: string; // Add description field
+  description?: string;
   beginTime?: Dayjs | null;
   endTime?: Dayjs | null;
+  minPrice?: number;  // Add price range to base event
+  maxPrice?: number;  // Add price range to base event
 }
 
 // Travel
@@ -16,14 +18,12 @@ export interface TravelTripEvent extends BaseTripEvent {
   transportType?: string;
   from?: string;
   to?: string;
-  cost?: number;
 }
 
 // Eating
 export interface EatingTripEvent extends BaseTripEvent {
   type: "Eating";
   cuisine?: string;
-  price?: number;
   address?: string;
 }
 
@@ -31,7 +31,6 @@ export interface EatingTripEvent extends BaseTripEvent {
 export interface SightseeingTripEvent extends BaseTripEvent {
   type: "Sightseeing";
   location?: string;
-  price?: number;
   openingHours?: string;
   bestTime?: string;
 }
@@ -39,8 +38,7 @@ export interface SightseeingTripEvent extends BaseTripEvent {
 // Accommodation
 export interface AccommodationTripEvent extends BaseTripEvent {
   type: "Accommodation";
-  typeName?: string; // renamed from 'type' to avoid conflict
-  price?: number;
+  typeName?: string;
   address?: string;
   checkIn?: string;
   checkOut?: string;
@@ -49,7 +47,6 @@ export interface AccommodationTripEvent extends BaseTripEvent {
 // Activity
 export interface ActivityTripEvent extends BaseTripEvent {
   type: "Activity";
-  price?: number;
   location?: string;
   difficulty?: ActivityIdea["difficulty"];
 }

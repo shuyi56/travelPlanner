@@ -137,6 +137,8 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
     name: "",
     beginTime: "",
     endTime: "",
+    minPrice: "",
+    maxPrice: "",
   });
 
   // Check for time conflicts when time is selected
@@ -172,6 +174,8 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
         name: !event.name ? "Name is required" : "",
         beginTime: !event.beginTime ? "Begin time is required" : "",
         endTime: !event.endTime ? "End time is required" : "",
+        minPrice: "",
+        maxPrice: "",
       };
 
       if (event.beginTime && event.endTime) {
@@ -274,6 +278,71 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
           </Form.Item>
         </Col>
       </Row>
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            label="Min Price"
+            validateStatus={errors.minPrice ? "error" : ""}
+            help={errors.minPrice}
+            style={{ marginBottom: 12 }}
+          >
+            <InputNumber
+              value={event.minPrice}
+              onChange={(val) => onChange({ minPrice: val ?? undefined })}
+              onBlur={() => {
+                if (
+                  event.maxPrice &&
+                  event.minPrice &&
+                  event.minPrice > event.maxPrice
+                ) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    minPrice:
+                      "Minimum price cannot be greater than maximum price",
+                  }));
+                } else {
+                  setErrors((prev) => ({ ...prev, minPrice: "" }));
+                }
+              }}
+              prefix="$"
+              precision={2}
+              style={halfWidthStyle}
+              aria-label="Min Price" // Add this line
+            />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label="Max Price"
+            validateStatus={errors.maxPrice ? "error" : ""}
+            help={errors.maxPrice}
+            style={{ marginBottom: 12 }}
+          >
+            <InputNumber
+              value={event.maxPrice}
+              onChange={(val) => onChange({ maxPrice: val ?? undefined })}
+              onBlur={() => {
+                if (
+                  event.minPrice &&
+                  event.maxPrice &&
+                  event.maxPrice < event.minPrice
+                ) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    maxPrice: "Maximum price cannot be less than minimum price",
+                  }));
+                } else {
+                  setErrors((prev) => ({ ...prev, maxPrice: "" }));
+                }
+              }}
+              prefix="$"
+              precision={2}
+              style={halfWidthStyle}
+              aria-label="Max Price" // Add this line
+            />
+          </Form.Item>
+        </Col>
+      </Row>
     </>
   );
 
@@ -298,6 +367,7 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
               <Form.Item label="From" style={{ marginBottom: 12 }}>
                 <AddressSearch
                   placeholder="From"
+                  value={event.from}
                   onSelect={(address) => onChange({ from: address })}
                 />
               </Form.Item>
@@ -306,22 +376,12 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
               <Form.Item label="To" style={{ marginBottom: 12 }}>
                 <AddressSearch
                   placeholder="To"
+                  value={event.to}
                   onSelect={(address) => onChange({ to: address })}
                 />
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item label="Cost" style={{ marginBottom: 12 }}>
-            <InputNumber
-              value={event.cost}
-              onChange={(val) =>
-                handleNumberChange(val, (value) => onChange({ cost: value }))
-              }
-              prefix="$"
-              precision={2}
-              style={{ width: "50%" }}
-            />
-          </Form.Item>
         </>
       );
     case "Eating":
@@ -338,25 +398,11 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item label="Price" style={{ marginBottom: 12 }}>
-                <InputNumber
-                  value={event.price}
-                  onChange={(val) =>
-                    handleNumberChange(val, (value) =>
-                      onChange({ price: value })
-                    )
-                  }
-                  prefix="$"
-                  precision={2}
-                  style={halfWidthStyle}
-                />
-              </Form.Item>
-            </Col>
           </Row>
           <Form.Item label="Address" style={{ marginBottom: 12 }}>
             <AddressSearch
               placeholder="Address"
+              value={event.address}
               onSelect={(address) => onChange({ address })}
             />
           </Form.Item>
@@ -371,22 +417,8 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
               <Form.Item label="Location" style={{ marginBottom: 12 }}>
                 <AddressSearch
                   placeholder="Location"
+                  value={event.location}
                   onSelect={(address) => onChange({ location: address })}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label="Price" style={{ marginBottom: 12 }}>
-                <InputNumber
-                  value={event.price}
-                  onChange={(val) =>
-                    handleNumberChange(val, (value) =>
-                      onChange({ price: value })
-                    )
-                  }
-                  prefix="¥"
-                  precision={2}
-                  style={halfWidthStyle}
                 />
               </Form.Item>
             </Col>
@@ -427,25 +459,11 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item label="Price" style={{ marginBottom: 12 }}>
-                <InputNumber
-                  value={event.price}
-                  onChange={(val) =>
-                    handleNumberChange(val, (value) =>
-                      onChange({ price: value })
-                    )
-                  }
-                  prefix="¥"
-                  precision={2}
-                  style={halfWidthStyle}
-                />
-              </Form.Item>
-            </Col>
           </Row>
           <Form.Item label="Address" style={{ marginBottom: 12 }}>
             <AddressSearch
               placeholder="Address"
+              value={event.address}
               onSelect={(address) => onChange({ address })}
             />
           </Form.Item>
@@ -475,26 +493,10 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
       return (
         <>
           {commonFields}
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item label="Price" style={{ marginBottom: 12 }}>
-                <InputNumber
-                  value={event.price}
-                  onChange={(val) =>
-                    handleNumberChange(val, (value) =>
-                      onChange({ price: value })
-                    )
-                  }
-                  prefix="$"
-                  precision={2}
-                  style={{ width: "50%" }}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
           <Form.Item label="Location" style={{ marginBottom: 12 }}>
             <AddressSearch
               placeholder="Location"
+              value={event.location}
               onSelect={(address) => onChange({ location: address })}
             />
           </Form.Item>
