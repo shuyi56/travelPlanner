@@ -49,7 +49,8 @@ export interface AccommodationTripEvent extends BaseTripEvent {
 // Activity
 export interface ActivityTripEvent extends BaseTripEvent {
   type: "Activity";
-  price?: number;
+  price_low?: number;
+  price_high?: number;
   location?: string;
   difficulty?: ActivityIdea["difficulty"];
 }

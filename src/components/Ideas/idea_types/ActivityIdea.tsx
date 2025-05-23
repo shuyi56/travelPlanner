@@ -1,12 +1,13 @@
 import React from "react";
-import { Form, Input, theme, Typography, Segmented } from "antd";
+import { Form, Input, theme, Typography, Segmented, InputNumber } from "antd";
 import { DollarRating } from "../../shared/DollarRating";
 import { BaseIdea, BaseIdeaCard, BaseIdeaForm } from "./BaseIdea";
 import AddressSearch from "../../shared/AddressSearch";
 
 export interface ActivityIdea extends BaseIdea {
   duration?: string;
-  price?: number;
+  price_low?: number;
+  price_high?: number;
   location?: string;
   difficulty?: "easy" | "moderate" | "challenging" | "extreme";
 }
@@ -16,7 +17,8 @@ export function createActivityIdea(name: string): ActivityIdea {
     name,
     photos: [],
     duration: "",
-    price: 0,
+    price_low: 0,
+    price_high: 0,
     location: "",
     difficulty: "easy",
   };
@@ -35,8 +37,27 @@ export const ActivityIdeaForm: React.FC = () => {
       <Form.Item name="duration" label="Duration">
         <Input placeholder="e.g. 2 hours" />
       </Form.Item>
-      <Form.Item name="price" label="Cost">
-        <DollarRating />
+      <Form.Item name="price_low" label="Minimum Price">
+        <InputNumber min={0} placeholder="e.g. 10" style={{ width: "100%" }} />
+      </Form.Item>
+      <Form.Item
+        name="price_high"
+        label="Maximum Price"
+        dependencies={["price_low"]}
+        rules={[
+          ({ getFieldValue }) => ({
+            validator(_, value) {
+              if (!value || getFieldValue("price_low") <= value) {
+                return Promise.resolve();
+              }
+              return Promise.reject(
+                new Error("Minimum price cannot be greater than maximum price.")
+              );
+            },
+          }),
+        ]}
+      >
+        <InputNumber min={0} placeholder="e.g. 50" style={{ width: "100%" }} />
       </Form.Item>
       <Form.Item name="location" label="Location">
         <AddressSearch placeholder="Type to search location" />
@@ -105,6 +126,25 @@ export const ActivityIdeaCard: React.FC<{
     extreme: "#f5222d",
   };
 
+  const getPriceString = () => {
+    const { price_low, price_high } = subitem;
+    if (price_low && price_high && price_low !== price_high) {
+      return `$${price_low} - $${price_high}`;
+    }
+    if (price_low && price_high && price_low === price_high) {
+      return `$${price_low}`;
+    }
+    if (price_low && price_low > 0) {
+      return `At least $${price_low}`;
+    }
+    if (price_high && price_high > 0) {
+      return `Up to $${price_high}`;
+    }
+    return null;
+  };
+
+  const priceString = getPriceString();
+
   return (
     <BaseIdeaCard
       subitem={subitem}
@@ -146,6 +186,15 @@ export const ActivityIdeaCard: React.FC<{
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 16 }}>📍</span>
                 <Typography.Text>{subitem.location}</Typography.Text>
+              </div>
+            </div>
+          )}
+          {priceString && (
+            <div>
+              <Typography.Text type="secondary">Estimated Cost</Typography.Text>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 16 }}>💰</span>
+                <Typography.Text>{priceString}</Typography.Text>
               </div>
             </div>
           )}

@@ -476,18 +476,50 @@ export const EventFormBuilder: React.FC<EventFormBuilderProps> = ({
         <>
           {commonFields}
           <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item label="Price" style={{ marginBottom: 12 }}>
+            <Col span={12}>
+              <Form.Item label="Minimum Price" style={{ marginBottom: 12 }}>
                 <InputNumber
-                  value={event.price}
+                  value={event.price_low}
                   onChange={(val) =>
                     handleNumberChange(val, (value) =>
-                      onChange({ price: value })
+                      onChange({ price_low: value })
                     )
                   }
                   prefix="$"
                   precision={2}
-                  style={{ width: "50%" }}
+                  min={0}
+                  style={{ width: "100%" }}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="Maximum Price"
+                style={{ marginBottom: 12 }}
+                dependencies={['price_low']} // Important for re-validation if price_low changes
+                rules={[
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const priceLow = event.price_low; // Use directly from the event prop for current value
+                      if (value === null || value === undefined || priceLow === null || priceLow === undefined || priceLow <= value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('Maximum price must be greater than or equal to minimum price.'));
+                    },
+                  }),
+                ]}
+              >
+                <InputNumber
+                  value={event.price_high}
+                  onChange={(val) =>
+                    handleNumberChange(val, (value) =>
+                      onChange({ price_high: value })
+                    )
+                  }
+                  prefix="$"
+                  precision={2}
+                  min={0}
+                  style={{ width: "100%" }}
                 />
               </Form.Item>
             </Col>

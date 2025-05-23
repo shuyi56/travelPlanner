@@ -300,7 +300,8 @@ describe('eventFormBuilder', () => {
       description: 'Mountain trail hike',
       beginTime: dayjs('09:00', 'HH:mm'),
       endTime: dayjs('13:00', 'HH:mm'),
-      price: 0,
+      price_low: 10,
+      price_high: 50,
       location: { formatted_address: 'Mountain Trailhead' },
       difficulty: 'moderate',
     };
@@ -311,17 +312,14 @@ describe('eventFormBuilder', () => {
       render(<TestHost />);
 
       expect(screen.getByDisplayValue(activityEventData.name)).toBeInTheDocument();
-      expect(screen.getByText('Price')).toBeInTheDocument();
-      // For price 0, valueNow might be "0" or "0.00". Let's try "0".
-      // If there are multiple spinbuttons, this needs to be more specific.
-      // Assuming this is the only spinbutton or the one for Activity's price.
-      const priceSpinbuttons = screen.getAllByRole('spinbutton');
-      // This is fragile; ideally, test IDs or more specific selectors would be used.
-      // For now, let's assume the last spinbutton on this form is the relevant one.
-      // Expect "0.00" for a price of 0 due to InputNumber formatting.
-      expect(priceSpinbuttons[priceSpinbuttons.length -1]).toHaveValue(
-        activityEventData.price === 0 ? '0.00' : activityEventData.price.toString()
-      );
+      
+      expect(screen.getByText('Minimum Price')).toBeInTheDocument();
+      const minPriceInput = screen.getByLabelText(/Minimum Price/i);
+      expect(minPriceInput).toHaveValue(activityEventData.price_low);
+
+      expect(screen.getByText('Maximum Price')).toBeInTheDocument();
+      const maxPriceInput = screen.getByLabelText(/Maximum Price/i);
+      expect(maxPriceInput).toHaveValue(activityEventData.price_high);
 
       expect(screen.getByText('Location')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Location')).toBeInTheDocument();
@@ -330,6 +328,41 @@ describe('eventFormBuilder', () => {
       // The text "Moderate" should be visible and have styling indicating it's selected.
       // A simple check for the text for now.
       expect(screen.getByText('Moderate')).toBeInTheDocument();
+    });
+
+    it('calls onChange for Minimum Price field (Activity)', async () => {
+      const formUI = eventFormBuilder({ event: activityEventData, onChange: mockOnChange });
+      const TestHost = () => <form>{formUI}</form>;
+      render(<TestHost />);
+      const minPriceInput = screen.getByLabelText(/Minimum Price/i);
+      await userEvent.clear(minPriceInput);
+      await userEvent.type(minPriceInput, '15');
+      await userEvent.click(document.body); // Trigger blur
+      expect(mockOnChange).toHaveBeenLastCalledWith({ price_low: 15 });
+    });
+
+    it('calls onChange for Maximum Price field (Activity)', async () => {
+      const formUI = eventFormBuilder({ event: activityEventData, onChange: mockOnChange });
+      const TestHost = () => <form>{formUI}</form>;
+      render(<TestHost />);
+      const maxPriceInput = screen.getByLabelText(/Maximum Price/i);
+      await userEvent.clear(maxPriceInput);
+      await userEvent.type(maxPriceInput, '60');
+      await userEvent.click(document.body); // Trigger blur
+      expect(mockOnChange).toHaveBeenLastCalledWith({ price_high: 60 });
+    });
+
+    it('shows validation error if price_low > price_high (Activity)', async () => {
+      const invalidActivityData = { ...activityEventData, price_low: 50, price_high: 10 };
+      const formUI = eventFormBuilder({ event: invalidActivityData, onChange: mockOnChange });
+      const TestHost = () => <form>{formUI}</form>;
+      render(<TestHost />);
+      
+      const maxPriceInput = screen.getByLabelText(/Maximum Price/i);
+      fireEvent.blur(maxPriceInput); // Trigger validation
+
+      const errorMessage = await screen.findByText(/Maximum price must be greater than or equal to minimum price./i);
+      expect(errorMessage).toBeInTheDocument();
     });
 
     it('calls onChange for Difficulty Level field (Activity)', async () => {
